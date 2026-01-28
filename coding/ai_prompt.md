@@ -82,6 +82,20 @@ src/
 - Do not move files outside the feature folder unless explicitly reusable
 - Use functional components only
 
+### UI Component Rules (MANDATORY)
+
+- All screens must use `AppScreen` as the root wrapper
+- Use `AppText` instead of raw `Text` from `react-native`
+- Use `AppButton` for primary actions instead of raw buttons
+- Use `AppInput` for text inputs instead of raw `TextInput`
+- Use `AppLoader` for loading states
+- Use `AppError` to display error messages
+  
+-> Import from ./components
+  --
+Only use raw React Native components (`View`, `Text`, `TextInput`, etc.) if:
+- The shared component does not support the needed behavior
+- You clearly explain why before using the raw component
 ---
 
 ## Feature to Implement
