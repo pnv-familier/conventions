@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: Familier API
+  description: API Documentation for Familier App - Sprint 1
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Auth'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me:
+    get:
+      summary: Get current user profile
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_User'
+
+  /families:
+    post:
+      summary: Create a new family
+      tags: [Families]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Gia đình yêu thương"
+      responses:
+        '201':
+          description: Family created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Family'
+
+  /families/join:
+    post:
+      summary: Join a family via invite code
+      tags: [Families]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inviteCode:
+                  type: string
+                  example: "ABC123XYZ"
+      responses:
+        '200':
+          description: Joined family successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Family'
+
+# ---------------------------------------------------------
+# COMPONENTS
+# ---------------------------------------------------------
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad Request (Validation Error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # --- Base Response Wrappers (Mapping to your Java DTOs) ---
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Validation failed"
+        path:
+          type: string
+          example: "/api/v1/auth/register"
+        details:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            email: "Email format is invalid"
+            password: "Password must be at least 6 chars"
+
+    # --- Generic Success Wrapper Pattern ---
+    # Swagger doesn't support Generics directly, so we define concrete wrappers
+    
+    SuccessResponse_User:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Operation successful"
+        data:
+          $ref: '#/components/schemas/UserDTO'
+
+    SuccessResponse_Auth:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login successful"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            user:
+              $ref: '#/components/schemas/UserDTO'
+
+    SuccessResponse_Family:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Family created successfully"
+        data:
+          $ref: '#/components/schemas/FamilyDTO'
+
+    # --- Domain Models (Based on ERD) ---
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+        avatarUrl:
+          type: string
+        isPremium:
+          type: boolean
+    
+    FamilyDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        inviteCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # --- Request Bodies ---
+    RegisterRequest:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        fullName:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
