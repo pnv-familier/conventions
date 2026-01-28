@@ -1,4 +1,4 @@
-<img width="1602" height="309" alt="image" src="https://github.com/user-attachments/assets/037e65a0-bf09-4c75-aa4d-da56fa8b0300" /># This repository is for Familier project document
+# This repository is for Familier project document
 
 ## Project installation
 1. Create folder ```familier```
