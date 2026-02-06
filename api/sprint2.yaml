@@ -1,0 +1,446 @@
+openapi: 3.0.3
+info:
+  title: Familier API
+  description: API Documentation for Familier App – Social Space & AI Features
+  version: 1.1.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Server
+
+# =========================================================
+# SECURITY
+# =========================================================
+security:
+  - bearerAuth: []
+
+# =========================================================
+# PATHS
+# =========================================================
+paths:
+
+  # ---------------------------------------------------------
+  # AUTHENTICATION
+  # ---------------------------------------------------------
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Auth'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ---------------------------------------------------------
+  # USER
+  # ---------------------------------------------------------
+  /users/me:
+    get:
+      summary: Get current user profile
+      tags: [Users]
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_User'
+
+  # ---------------------------------------------------------
+  # FAMILY
+  # ---------------------------------------------------------
+  /families:
+    post:
+      summary: Create a new family
+      tags: [Families]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: "HeartString Family"
+      responses:
+        '201':
+          description: Family created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Family'
+
+  /families/join:
+    post:
+      summary: Join a family via invite code
+      tags: [Families]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inviteCode]
+              properties:
+                inviteCode:
+                  type: string
+                  example: "ABC123XYZ"
+      responses:
+        '200':
+          description: Joined family successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse_Family'
+
+  # ---------------------------------------------------------
+  # FAMILY SOCIAL SPACE – POSTS
+  # ---------------------------------------------------------
+  /family/posts:
+    get:
+      summary: View family social feed
+      tags: [Family Social]
+      responses:
+        '200':
+          description: Family posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PostDTO'
+
+    post:
+      summary: Create a family post
+      tags: [Family Social]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  example: "We had dinner together"
+                mediaUrls:
+                  type: array
+                  items:
+                    type: string
+                    example: "https://cdn.familier.com/posts/img1.jpg"
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PostDTO'
+
+  # ---------------------------------------------------------
+  # POST REACTIONS
+  # ---------------------------------------------------------
+  /family/posts/{postId}/reactions:
+    post:
+      summary: React to a post
+      tags: [Family Social]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reactionType]
+              properties:
+                reactionType:
+                  type: string
+                  example: "LIKE"
+      responses:
+        '200':
+          description: Reaction added successfully
+
+    delete:
+      summary: Remove reaction from a post
+      tags: [Family Social]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Reaction removed successfully
+
+  # ---------------------------------------------------------
+  # POST COMMENTS
+  # ---------------------------------------------------------
+  /family/posts/{postId}/comments:
+    get:
+      summary: View comments of a post (infinite scroll)
+      tags: [Family Social]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Comments retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommentDTO'
+
+    post:
+      summary: Comment on a post
+      tags: [Family Social]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  example: "That sounds lovely!"
+      responses:
+        '201':
+          description: Comment added successfully
+
+# =========================================================
+# COMPONENTS
+# =========================================================
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    # ------------------------
+    # ERROR
+    # ------------------------
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        path:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+
+    # ------------------------
+    # SUCCESS WRAPPERS
+    # ------------------------
+    SuccessResponse_User:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/UserDTO'
+
+    SuccessResponse_Auth:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            user:
+              $ref: '#/components/schemas/UserDTO'
+
+    SuccessResponse_Family:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/FamilyDTO'
+
+    # ------------------------
+    # DOMAIN MODELS
+    # ------------------------
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+        avatarUrl:
+          type: string
+        isPremium:
+          type: boolean
+
+    FamilyDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        inviteCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    MediaDTO:
+      type: object
+      properties:
+        url:
+          type: string
+        type:
+          type: string
+          example: "IMAGE"
+
+    PostDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        author:
+          $ref: '#/components/schemas/UserDTO'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaDTO'
+        reactionsCount:
+          type: integer
+        commentsCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CommentDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        author:
+          $ref: '#/components/schemas/UserDTO'
+        createdAt:
+          type: string
+          format: date-time
+
+    # ------------------------
+    # REQUESTS
+    # ------------------------
+    RegisterRequest:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        fullName:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+
